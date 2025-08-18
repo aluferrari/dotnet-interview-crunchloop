@@ -1,18 +1,50 @@
 using Microsoft.EntityFrameworkCore;
+using TodoApi.Interfaces;
+using TodoApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-builder
-    .Services.AddDbContext<TodoContext>(opt =>
-        opt.UseSqlServer(builder.Configuration.GetConnectionString("TodoContext"))
-    )
-    .AddEndpointsApiExplorer()
-    .AddControllers();
 
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.DefaultIgnoreCondition =
+            System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    });
+
+
+builder.Services.AddDbContext<TodoContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+//builder.Services.AddHttpClient<IExternalApiClient, ExternalApiClient>(client =>
+//{
+//    client.BaseAddress = new Uri("https://external-api-url/");
+//});
+
+builder.Services.AddSingleton<IExternalApiClient, MockExternalApiClient>();
+
+builder.Services.AddSingleton<ITodoSyncService, TodoSyncService>();
+builder.Services.AddHostedService<TodoSyncService>();
 
 var app = builder.Build();
 
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<TodoContext>();
+    db.Database.Migrate();
+}
+
 app.Run();
