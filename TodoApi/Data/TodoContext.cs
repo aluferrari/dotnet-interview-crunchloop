@@ -8,6 +8,7 @@ public class TodoContext : DbContext
 
     public DbSet<TodoList> TodoList { get; set; } = default!;
     public DbSet<TodoItem> TodoItems { get; set; } = default!;
+    public DbSet<FailedSyncJob> FailedSyncJobs { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
