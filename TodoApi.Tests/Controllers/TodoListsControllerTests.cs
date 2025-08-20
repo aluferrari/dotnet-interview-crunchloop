@@ -4,7 +4,7 @@ using TodoApi.Controllers;
 using TodoApi.Dtos.TodoLists;
 using TodoApi.Models;
 
-namespace TodoApi.Tests;
+namespace TodoApi.Tests.Controllers;
 
 #nullable disable
 public class TodoListsControllerTests
@@ -34,8 +34,9 @@ public class TodoListsControllerTests
 
             var result = await controller.GetTodoLists(false);
 
-            Assert.IsType<OkObjectResult>(result.Result);
-            Assert.Equal(2, ((result.Result as OkObjectResult).Value as IList<TodoList>).Count);
+            Assert.IsType<OkObjectResult>(result.Result); 
+            var items = Assert.IsAssignableFrom<IEnumerable<TodoListDto>>((result.Result as OkObjectResult)!.Value);
+            Assert.Equal(2, items.Count());
         }
     }
 
